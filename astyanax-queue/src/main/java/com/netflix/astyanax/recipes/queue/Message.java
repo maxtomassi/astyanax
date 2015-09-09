@@ -39,7 +39,7 @@ public class Message {
     /**
      * Lower value priority tasks get executed first
      */
-    private byte priority = 0;
+    private long priority = 0;
     
     /**
      * Timeout value in seconds
@@ -137,7 +137,7 @@ public class Message {
         return this;
     }
 
-    public byte getPriority() {
+    public long getPriority() {
         return priority;
     }
 
@@ -155,7 +155,7 @@ public class Message {
      * @param priority
      * @return
      */
-    public Message setPriority(byte priority) {
+    public Message setPriority(long priority) {
         this.priority = priority;
         return this;
     }

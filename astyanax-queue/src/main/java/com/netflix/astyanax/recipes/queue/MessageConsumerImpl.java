@@ -275,7 +275,7 @@ class MessageConsumerImpl implements MessageConsumer {
             List<MessageContext> entries = Lists.newArrayList();
             RangeEndpoint re = ShardedDistributedMessageQueue.entrySerializer
                                               .makeEndpoint((byte) MessageQueueEntryType.Message.ordinal(), Equality.EQUAL)
-                                              .append((byte) 0, Equality.EQUAL);
+                                              .append(0L, Equality.EQUAL);
             if(lockColumn!=null) {
                 re.append(lockColumn.getTimestamp(), Equality.LESS_THAN_EQUALS);
             } else {
