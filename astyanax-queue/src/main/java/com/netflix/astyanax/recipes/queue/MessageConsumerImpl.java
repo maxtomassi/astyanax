@@ -120,7 +120,7 @@ class MessageConsumerImpl implements MessageConsumer {
         try {
             // 1. Write the lock column
             lockColumn = MessageQueueEntry.newLockEntry(MessageQueueEntryState.None);
-            long curTimeMicros = TimeUUIDUtils.getTimeFromUUID(lockColumn.getTimestamp());
+            long curTimeMicros = TimeUUIDUtils.getMicrosTimeFromUUID(lockColumn.getTimestamp());
             m = queue.keyspace.prepareMutationBatch().setConsistencyLevel(queue.consistencyLevel);
             m.withRow(queue.queueColumnFamily, shardName).putColumn(lockColumn, curTimeMicros + queue.lockTimeout, queue.lockTtl);
             m.execute();
@@ -142,6 +142,7 @@ class MessageConsumerImpl implements MessageConsumer {
             lockColumnCount = result.size();
             for (Column<MessageQueueEntry> column : result) {
                 MessageQueueEntry lock = column.getName();
+
                 if (lock.getType() == MessageQueueEntryType.Lock) {
                     lockColumnCount++;
                     // Stale lock so we can discard it
@@ -156,14 +157,17 @@ class MessageConsumerImpl implements MessageConsumer {
                             lockAcquired = true;
                         }
                     }
-                    if (!lockAcquired) {
-                        throw new BusyLockException("Not first lock");
-                    }
-                    // Write the acquired lock column
-                    lockColumn = MessageQueueEntry.newLockEntry(lockColumn.getTimestamp(), MessageQueueEntryState.Acquired);
-                    rowMutation.putColumn(lockColumn, curTimeMicros + queue.lockTimeout, queue.lockTtl);
                 }
             }
+
+            if (!lockAcquired) {
+                throw new BusyLockException("Not first lock");
+            }
+
+            // Write the acquired lock column
+            lockColumn = MessageQueueEntry.newLockEntry(lockColumn.getTimestamp(), MessageQueueEntryState.Acquired);
+            rowMutation.putColumn(lockColumn, curTimeMicros + queue.lockTimeout, queue.lockTtl);
+
         } catch (BusyLockException e) {
             queue.stats.incLockContentionCount();
             throw e;
